@@ -11,7 +11,7 @@
 
     <groupId>com.edu.ulab</groupId>
     <artifactId>app</artifactId>
-    <version>3.8.4</version>
+    <version>0.0.1-SNAPSHOT</version>
     <name>app</name>
     <description>Demo project for Spring Boot</description>
 
