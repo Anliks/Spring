@@ -2,7 +2,10 @@ package com.edu.ulab.app.service;
 
 import com.edu.ulab.app.dto.UserDto;
 
+import java.util.List;
+
 public interface UserService {
+
     UserDto createUser(UserDto userDto);
 
     UserDto updateUser(UserDto userDto);
@@ -10,4 +13,10 @@ public interface UserService {
     UserDto getUserById(Long id);
 
     void deleteUserById(Long id);
+
+    void createListBooksToUser(List<Long> list, Long id);
+
+    List<Long> listBooksFromUser(Long id);
+
+
 }
