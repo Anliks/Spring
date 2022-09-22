@@ -14,9 +14,6 @@ public interface UserService {
 
     void deleteUserById(Long id);
 
-    void createListBooksToUser(List<Long> list, Long id);
-
-    List<Long> listBooksFromUser(Long id);
 
 
 }

@@ -13,5 +13,4 @@ public class User {
     private String fullName;
     private String title;
     private int age;
-    private List<Long> userBooks = new ArrayList<>();
 }
