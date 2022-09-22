@@ -54,9 +54,6 @@ public class UserDataFacade {
                 .toList();
         log.info("Collected book ids: {}", bookIdList);
 
-        //добавление списка книг пользователю!
-        addListBooksToUser(bookIdList, userDto.getId());
-
 
         return UserBookResponse.builder()
                 .userId(createdUser.getId())
@@ -65,7 +62,7 @@ public class UserDataFacade {
     }
 
     public UserBookResponse updateUserWithBooks(UserBookRequest userBookRequest) {
-        log.info("Got user book create request: {}", userBookRequest);
+        log.info("Got user book update request: {}", userBookRequest);
         UserDto userDto = userMapper.userRequestToUserDto(userBookRequest.getUserRequest());
         UserDto updatedUser = userService.updateUser(userDto);
         log.info("Updated User: {}", updatedUser);
@@ -78,7 +75,7 @@ public class UserDataFacade {
                 .map(bookMapper::bookRequestToBookDto)
                 .peek(bookDto -> bookDto.setUserId(updatedUser.getId()))
                 .map(bookService::updateBook)
-                .peek(updatedBook -> log.info("Created book: {}", updatedBook))
+                .peek(updatedBook -> log.info("Update book: {}", updatedBook))
                 .map(BookDto::getId)
                 .toList();
         log.info("Collected book ids {}", bookIdList);
@@ -90,19 +87,18 @@ public class UserDataFacade {
     }
 
     public UserBookResponse getUserWithBooks(Long userId) {
+        log.info("Got user id{}", userId);
         UserDto userDto = userService.getUserById(userId);
-        return UserBookResponse.builder().userId(userDto.getId()).booksIdList(userService.listBooksFromUser(userId)).build();
-
+        log.info("Got valid user {}", userDto);
+        List<Long> bookIdList = bookService.listBooksFromUser(userId).stream().map(bookDto -> bookDto.getId()).toList();
+        return UserBookResponse.builder().userId(userDto.getId()).booksIdList(bookIdList).build();
     }
 
     public void deleteUserWithBooks(Long userId) {
+        log.info("Got delete user {}", userId);
         userService.deleteUserById(userId);
+        bookService.deleteBooksFromUser(userId);
+        log.info("Got deleted user {}", userId);
     }
-
-    //Костыль
-    public void addListBooksToUser(List<Long> list, Long id) {
-        userService.createListBooksToUser(list, id);
-    }
-
 
 }

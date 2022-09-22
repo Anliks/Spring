@@ -2,76 +2,74 @@ package com.edu.ulab.app.service.impl;
 
 import com.edu.ulab.app.dto.UserDto;
 import com.edu.ulab.app.entity.User;
-import com.edu.ulab.app.repository.BookRepository;
-import com.edu.ulab.app.repository.UserRepository;
+import com.edu.ulab.app.exception.NotFoundException;
+import com.edu.ulab.app.exception.NotValidDataException;
+import com.edu.ulab.app.mapper.UserMapper;
+import com.edu.ulab.app.repository.AbstractRepository;
 import com.edu.ulab.app.service.UserService;
+import com.edu.ulab.app.validation.IsValidUser;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 
-import java.util.List;
-import java.util.Objects;
-
 @Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
-    UserRepository userRepository;
-    BookRepository bookRepository;
+
+    private AbstractRepository abstractRepository;
+    UserMapper userMapper;
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, BookRepository bookRepository) {
-        this.userRepository = userRepository;
-        this.bookRepository = bookRepository;
-
+    public UserServiceImpl(AbstractRepository abstractRepository, UserMapper userMapper) {
+        this.abstractRepository = abstractRepository;
+        this.userMapper = userMapper;
     }
 
     @Override
     public UserDto createUser(UserDto userDto) {
-        User user = new User();
-        user.setAge(userDto.getAge());
-        user.setFullName(userDto.getFullName());
-        user.setTitle(userDto.getTitle());
-        userDto.setId(userRepository.createUser(user).getId());
-        return userDto;
+        User user;
+        if (IsValidUser.isValid(userDto)) {
+            userDto.setId(abstractRepository.getCurrentId());
+            user = abstractRepository.create(userMapper.userDtoToUser(userDto));
+        } else {
+            throw new NotValidDataException("Not valid object");
+        }
+        return userMapper.userToUserDto(user);
     }
 
     @Override
     public UserDto updateUser(UserDto userDto) {
-        User user = userRepository.getById(userDto.getId());
-        user.setTitle(userDto.getTitle());
-        user.setAge(userDto.getAge());
-        user.setFullName(userDto.getFullName());
-        userDto.setId(userRepository.updateUser(user).getId());
-        return userDto;
+        if (!IsValidUser.isValid(userDto)) {
+            throw new NotValidDataException("Not valid update " + userDto);
+        }
+        UserDto inHolderUser = getUserById(userDto.getId());
+        inHolderUser.setFullName(userDto.getFullName());
+        inHolderUser.setTitle(userDto.getTitle());
+        inHolderUser.setAge(userDto.getAge());
+        abstractRepository.update(inHolderUser);
+        return inHolderUser;
     }
 
     @Override
     public UserDto getUserById(Long id) {
-        UserDto userDto = new UserDto();
-        User user = userRepository.getById(id);
-        userDto.setId(user.getId());
-        userDto.setAge(user.getAge());
-        userDto.setTitle(user.getTitle());
-        userDto.setFullName(user.getFullName());
-        return userDto;
+        Object object = abstractRepository.getById(id);
+        if (object instanceof User) {
+            log.info("get user by id {}", object);
+            return userMapper.userToUserDto((User) object);
+        } else {
+            throw new NotFoundException("id is not found");
+        }
     }
 
     @Override
     public void deleteUserById(Long id) {
-        userRepository.deleteUser(id);
+        Object object = abstractRepository.getById(id);
+        if (object instanceof User) {
+            abstractRepository.delete(id);
+        } else {
+            throw new NotValidDataException("not valid ids");
+        }
     }
-
-    //костыль в виде создания листа id books
-    @Override
-    public void createListBooksToUser(List<Long> list, Long id) {
-        userRepository.addListBooksToUser(list, id);
-    }
-
-    @Override
-    public List<Long> listBooksFromUser(Long id) {
-        return userRepository.getById(id).getUserBooks().stream().filter(Objects::nonNull).toList();
-    }
-
 }
